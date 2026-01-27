@@ -3,62 +3,153 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ちっくの9パズルno5</title>
+<title>ちっくの9パズル no.5</title>
 
 <style>
-  body { font-family: sans-serif; text-align: center; background: #f5f5f5; margin:0; padding:10px;}
-  #board { width: 90vw; max-width:360px; aspect-ratio:1/1; margin:20px auto; display:grid; grid-template-columns:repeat(3,1fr); gap:2px; touch-action:none;}
-  .tile { background-image: url("image-5.jpg"); background-size: 300% 300%; cursor:pointer;}
-  .empty { background: #ddd;}
-  button { padding:10px 18px; font-size:16px;}
-  #overlay { position: fixed; inset:0; background: rgba(0,0,0,0.6); display:none; justify-content:center; align-items:center;}
-  .clear-box { background:white; padding:20px; border-radius:12px; text-align:center; max-width:90%;}
-  .clear-box img { width:100%; max-width:300px; margin:10px 0;}
+body {
+  font-family: sans-serif;
+  text-align: center;
+  background: #f5f5f5;
+  margin: 0;
+  padding: 10px;
+}
+
+#board {
+  width: 90vw;
+  max-width: 360px;
+  aspect-ratio: 1 / 1;
+  margin: 15px auto;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2px;
+}
+
+.tile {
+  background-image: url("image-5.jpg");
+  background-size: 300% 300%;
+  cursor: pointer;
+}
+
+.empty {
+  background: #ddd;
+}
+
+button {
+  padding: 10px 18px;
+  font-size: 16px;
+}
+
+#overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  display: none;
+  justify-content: center;
+  align-items: center;
+}
+
+.clear-box {
+  background: white;
+  padding: 20px;
+  border-radius: 12px;
+}
+
+.clear-box img {
+  width: 100%;
+  max-width: 300px;
+}
 </style>
 </head>
+
 <body>
 
-<h1>ちっくの9パズルno5</h1>
+<h1>ちっくの9パズル no.5</h1>
+
+<img src="image-5.jpg" style="width:120px;border-radius:8px;margin-bottom:10px;">
+
 <button onclick="shuffle()">シャッフル</button>
+
 <div id="board"></div>
 
 <div id="overlay">
   <div class="clear-box">
-    <h2>クリア♪また挑戦してね♪</h2>
+    <h2>クリア！</h2>
     <img src="image-5.jpg">
     <button onclick="closeClear()">もう一度</button>
   </div>
 </div>
 
 <script>
-  const board=document.getElementById("board");
-  let tiles=[];
-  let startX=0,startY=0;
+const board = document.getElementById("board");
+let tiles = [];
 
-  board.addEventListener("touchstart", e=>{const t=e.touches[0]; startX=t.clientX; startY=t.clientY;});
-  board.addEventListener("touchend", e=>{const t=e.changedTouches[0]; const dx=t.clientX-startX; const dy=t.clientY-startY;
-    if(Math.abs(dx)>Math.abs(dy)){dx>30?swipe("right"):dx<-30&&swipe("left");}else{dy>30?swipe("down"):dy<-30&&swipe("up");}});
+function init() {
+  tiles = [1,2,3,4,5,6,7,8,null];
+}
 
-  function init(){tiles=[...Array(8).keys()].map(n=>n+1); tiles.push(null); draw();}
-  function draw(){board.innerHTML=""; tiles.forEach((num,i)=>{const div=document.createElement("div"); div.className="tile";
-    if(num===null){div.classList.add("empty");}else{const x=(num-1)%3; const y=Math.floor((num-1)/3); div.style.backgroundPosition=`${x*-100}% ${y*-100}%`; div.onclick=()=>move(i);}
-    board.appendChild(div);});}
+function draw() {
+  board.innerHTML = "";
+  tiles.forEach((num, i) => {
+    const div = document.createElement("div");
+    div.className = "tile";
 
-  function move(index){const emptyIndex=tiles.indexOf(null); const canMove=Math.abs(index-emptyIndex)===1&&Math.floor(index/3)===Math.floor(emptyIndex/3)||Math.abs(index-emptyIndex)===3;
-    if(canMove){[tiles[index],tiles[emptyIndex]]=[tiles[emptyIndex],tiles[index]]; draw(); checkClear();}}
+    if (num === null) {
+      div.classList.add("empty");
+    } else {
+      const x = (num - 1) % 3;
+      const y = Math.floor((num - 1) / 3);
+      div.style.backgroundPosition = `${x * -100}% ${y * -100}%`;
+      div.onclick = () => move(i);
+    }
 
-  function shuffle(){for(let i=0;i<200;i++){const empty=tiles.indexOf(null); const moves=[]; if(empty%3!==0)moves.push(empty-1); if(empty%3!==2)moves.push(empty+1);
-    if(empty>=3)moves.push(empty-3); if(empty<6)moves.push(empty+3); const move=moves[Math.floor(Math.random()*moves.length)]; [tiles[empty],tiles[move]]=[tiles[move],tiles[empty]];} draw();}
+    board.appendChild(div);
+  });
+}
 
-  function checkClear(){for(let i=0;i<8;i++){if(tiles[i]!==i+1)return;} document.getElementById("overlay").style.display="flex";}
-  function closeClear(){document.getElementById("overlay").style.display="none"; shuffle();}
-  function swipe(direction){const empty=tiles.indexOf(null); let target=null;
-    if(direction==="left"&&empty%3!==2)target=empty+1;
-    if(direction==="right"&&empty%3!==0)target=empty-1;
-    if(direction==="up"&&empty<6)target=empty+3;
-    if(direction==="down"&&empty>=3)target=empty-3;
-    if(target!==null){[tiles[empty],tiles[target]]=[tiles[target],tiles[empty]]; draw(); checkClear();}}
-  init();
+function move(index) {
+  const empty = tiles.indexOf(null);
+
+  const ok =
+    (Math.abs(index - empty) === 1 && Math.floor(index/3) === Math.floor(empty/3)) ||
+    Math.abs(index - empty) === 3;
+
+  if (!ok) return;
+
+  [tiles[index], tiles[empty]] = [tiles[empty], tiles[index]];
+  draw();
+  checkClear();
+}
+
+function shuffle() {
+  for (let i = 0; i < 300; i++) {
+    const empty = tiles.indexOf(null);
+    const m = [];
+    if (empty % 3 !== 0) m.push(empty - 1);
+    if (empty % 3 !== 2) m.push(empty + 1);
+    if (empty >= 3) m.push(empty - 3);
+    if (empty < 6) m.push(empty + 3);
+    const t = m[Math.floor(Math.random() * m.length)];
+    [tiles[empty], tiles[t]] = [tiles[t], tiles[empty]];
+  }
+  draw();
+}
+
+function checkClear() {
+  const goal = [1,2,3,4,5,6,7,8,null];
+  for (let i = 0; i < 9; i++) {
+    if (tiles[i] !== goal[i]) return;
+  }
+  document.getElementById("overlay").style.display = "flex";
+}
+
+function closeClear() {
+  document.getElementById("overlay").style.display = "none";
+  shuffle();
+}
+
+init();
+shuffle();
+draw();
 </script>
 
 </body>
