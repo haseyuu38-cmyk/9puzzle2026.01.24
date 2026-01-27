@@ -59,7 +59,9 @@
     if(direction==="down"&&empty>=3)target=empty-3;
     if(target!==null){[tiles[empty],tiles[target]]=[tiles[target],tiles[empty]]; draw(); checkClear();}}
   init();
+  shuffle();
 </script>
 
 </body>
 </html>
+
