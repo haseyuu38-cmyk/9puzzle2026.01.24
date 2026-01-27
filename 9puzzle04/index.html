@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ちっくの9パズル no.4</title>
+<title>ちっくの9パズル</title>
 
 <style>
 body {
@@ -63,7 +63,7 @@ button {
 
 <body>
 
-<h1>ちっくの9パズル no.4</h1>
+<h1>ちっくの9パズル</h1>
 
 <img src="image-4.jpg" style="width:120px;border-radius:8px;margin-bottom:10px;">
 
@@ -84,8 +84,7 @@ const board = document.getElementById("board");
 let tiles = [];
 
 function init() {
-  tiles = [...Array(8).keys()].map(n => n + 1);
-  tiles.push(null);
+  tiles = [1,2,3,4,5,6,7,8,null];
 }
 
 function draw() {
@@ -110,35 +109,35 @@ function draw() {
 function move(index) {
   const empty = tiles.indexOf(null);
 
-  const canMove =
-    Math.abs(index - empty) === 1 &&
-    Math.floor(index / 3) === Math.floor(empty / 3) ||
+  const ok =
+    (Math.abs(index - empty) === 1 && Math.floor(index/3) === Math.floor(empty/3)) ||
     Math.abs(index - empty) === 3;
 
-  if (canMove) {
-    [tiles[index], tiles[empty]] = [tiles[empty], tiles[index]];
-    draw();
-    checkClear();
-  }
+  if (!ok) return;
+
+  [tiles[index], tiles[empty]] = [tiles[empty], tiles[index]];
+  draw();
+  checkClear();
 }
 
 function shuffle() {
-  for (let i = 0; i < 200; i++) {
+  for (let i = 0; i < 300; i++) {
     const empty = tiles.indexOf(null);
-    const moves = [];
-    if (empty % 3 !== 0) moves.push(empty - 1);
-    if (empty % 3 !== 2) moves.push(empty + 1);
-    if (empty >= 3) moves.push(empty - 3);
-    if (empty < 6) moves.push(empty + 3);
-    const m = moves[Math.floor(Math.random() * moves.length)];
-    [tiles[empty], tiles[m]] = [tiles[m], tiles[empty]];
+    const m = [];
+    if (empty % 3 !== 0) m.push(empty - 1);
+    if (empty % 3 !== 2) m.push(empty + 1);
+    if (empty >= 3) m.push(empty - 3);
+    if (empty < 6) m.push(empty + 3);
+    const t = m[Math.floor(Math.random() * m.length)];
+    [tiles[empty], tiles[t]] = [tiles[t], tiles[empty]];
   }
   draw();
 }
 
 function checkClear() {
-  for (let i = 0; i < 8; i++) {
-    if (tiles[i] !== i + 1) return;
+  const goal = [1,2,3,4,5,6,7,8,null];
+  for (let i = 0; i < 9; i++) {
+    if (tiles[i] !== goal[i]) return;
   }
   document.getElementById("overlay").style.display = "flex";
 }
