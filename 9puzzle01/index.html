@@ -2,80 +2,97 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>ちっくの9パズル no.1</title>
 
 <style>
-body{
-  font-family:sans-serif;
-  text-align:center;
-  background:#f5f5f5;
-  margin:0;
-  padding:10px;
-  touch-action:manipulation;
-}
+  :root {
+    --board-size: 90vw;
+    --max-board-size: 360px;
+  }
 
-#board{
-  width:90vw;
-  max-width:360px;
-  margin:15px auto;
-  display:flex;
-  flex-wrap:wrap;
-}
+  body {
+    font-family: sans-serif;
+    text-align: center;
+    background: #f5f5f5;
+    margin: 0;
+    padding: 10px;
+    /* タップ時のズーム防止と反応速度向上 */
+    touch-action: manipulation;
+  }
 
-.tile{
-  width:33.333%;
-  position:relative;
-  background-image:url("image.jpg");
-  box-sizing:border-box;
-  border:1px solid #fff;
-}
+  #board {
+    width: var(--board-size);
+    max-width: var(--max-board-size);
+    aspect-ratio: 1 / 1; /* 確実に正方形にする */
+    margin: 15px auto;
+    display: flex;
+    flex-wrap: wrap;
+    background: #eee;
+    border: 2px solid #333;
+    box-sizing: border-box;
+  }
 
-.tile::before{
-  content:"";
-  display:block;
-  padding-top:100%;
-}
+  .tile {
+    width: 33.333%;
+    height: 33.333%;
+    box-sizing: border-box;
+    border: 1px solid #fff;
+    background-image: url("image.jpg");
+    /* 背景サイズを3x3（300%）に固定 */
+    background-size: 300% 300%;
+    cursor: pointer;
+    /* タップハイライトを消す（Android/iOS用） */
+    -webkit-tap-highlight-color: transparent;
+  }
 
-.empty{
-  background:#ddd;
-}
+  .empty {
+    background: #ddd !important;
+    cursor: default;
+  }
 
-button{
-  padding:10px 18px;
-  font-size:16px;
-}
+  button {
+    padding: 12px 24px;
+    font-size: 16px;
+    border-radius: 8px;
+    border: none;
+    background: #007bff;
+    color: white;
+    font-weight: bold;
+  }
 
-#overlay{
-  position:fixed;
-  inset:0;
-  background:rgba(0,0,0,.6);
-  display:none;
-  justify-content:center;
-  align-items:center;
-  z-index:10;
-}
+  #overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,.8);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 100;
+  }
 
-.clear-box{
-  background:white;
-  padding:20px;
-  border-radius:12px;
-}
+  .clear-box {
+    background: white;
+    padding: 20px;
+    border-radius: 12px;
+    width: 80%;
+    max-width: 300px;
+  }
 
-.clear-box img{
-  width:100%;
-  max-width:300px;
-}
+  .clear-box img {
+    width: 100%;
+    height: auto;
+    margin-bottom: 15px;
+  }
 </style>
 </head>
-
 <body>
 
 <h1>ちっくの9パズル no.1</h1>
 
-<img src="image.jpg" style="width:120px;border-radius:8px;margin-bottom:10px;">
-
-<button onclick="shuffle()">シャッフル</button>
+<img src="image.jpg" style="width:100px; height:100px; object-fit:cover; border-radius:8px; margin-bottom:10px;">
+<br>
+<button id="shuffleBtn">シャッフル</button>
 
 <div id="board"></div>
 
@@ -83,90 +100,95 @@ button{
   <div class="clear-box">
     <h2>クリア！</h2>
     <img src="image.jpg">
-    <button onclick="closeClear()">もう一度</button>
+    <button id="restartBtn">もう一度</button>
   </div>
 </div>
 
 <script>
-const board=document.getElementById("board");
-const overlay=document.getElementById("overlay");
-let tiles=[];
-const img=new Image();
-img.src="image.jpg";
-img.onload=()=>start();
+const board = document.getElementById("board");
+const overlay = document.getElementById("overlay");
+let tiles = [1, 2, 3, 4, 5, 6, 7, 8, null];
 
-function start(){
-  init();
+// 初期化
+function initGame() {
   shuffle();
   draw();
 }
 
-function init(){
-  tiles=[1,2,3,4,5,6,7,8,null];
-}
+function draw() {
+  board.innerHTML = "";
+  tiles.forEach((n, i) => {
+    const d = document.createElement("div");
+    d.className = "tile";
 
-function draw(){
-  const size = board.clientWidth / 3;
-  board.innerHTML="";
-
-  tiles.forEach((n,i)=>{
-    const d=document.createElement("div");
-    d.className="tile";
-
-    if(n===null){
+    if (n === null) {
       d.classList.add("empty");
-    }else{
-      const x=(n-1)%3;
-      const y=Math.floor((n-1)/3);
-
-      d.style.backgroundSize = board.clientWidth+"px "+board.clientWidth+"px";
-      d.style.backgroundPosition = `-${x*size}px -${y*size}px`;
-      d.onclick=()=>move(i);
+    } else {
+      // 背景位置を%で指定（0%, 50%, 100%）
+      const x = (n - 1) % 3;
+      const y = Math.floor((n - 1) / 3);
+      d.style.backgroundPosition = `${x * 50}% ${y * 50}%`;
+      
+      // クリックイベント（Androidでも確実に動くように定義）
+      d.addEventListener('click', () => move(i));
     }
-
     board.appendChild(d);
   });
 }
 
-function move(i){
-  const e=tiles.indexOf(null);
+function move(i) {
+  const e = tiles.indexOf(null);
+  const row = Math.floor(i / 3);
+  const col = i % 3;
+  const emptyRow = Math.floor(e / 3);
+  const emptyCol = e % 3;
 
-  if(
-    (Math.abs(i-e)==1 && Math.floor(i/3)==Math.floor(e/3)) ||
-    Math.abs(i-e)==3
-  ){
-    [tiles[i],tiles[e]]=[tiles[e],tiles[i]];
+  const isAdjacent = (Math.abs(row - emptyRow) + Math.abs(col - emptyCol) === 1);
+
+  if (isAdjacent) {
+    [tiles[i], tiles[e]] = [tiles[e], tiles[i]];
     draw();
-    check();
+    setTimeout(check, 100); // 描画が終わってからチェック
   }
 }
 
-function shuffle(){
-  for(let i=0;i<300;i++){
-    const e=tiles.indexOf(null);
-    const m=[];
-    if(e%3!==0)m.push(e-1);
-    if(e%3!==2)m.push(e+1);
-    if(e>=3)m.push(e-3);
-    if(e<6)m.push(e+3);
-    const t=m[Math.floor(Math.random()*m.length)];
-    [tiles[e],tiles[t]]=[tiles[t],tiles[e]];
+function shuffle() {
+  for (let i = 0; i < 200; i++) {
+    const e = tiles.indexOf(null);
+    const moves = [];
+    if (e % 3 !== 0) moves.push(e - 1);
+    if (e % 3 !== 2) moves.push(e + 1);
+    if (e >= 3) moves.push(e - 3);
+    if (e < 6) moves.push(e + 3);
+    const target = moves[Math.floor(Math.random() * moves.length)];
+    [tiles[e], tiles[target]] = [tiles[target], tiles[e]];
   }
 }
 
-function check(){
-  const g=[1,2,3,4,5,6,7,8,null];
-  for(let i=0;i<9;i++){
-    if(tiles[i]!==g[i])return;
+function check() {
+  const win = tiles.every((n, i) => n === (i === 8 ? null : i + 1));
+  if (win) {
+    overlay.style.display = "flex";
   }
-  overlay.style.display="flex";
 }
 
-function closeClear(){
-  overlay.style.display="none";
+// イベント設定
+document.getElementById("shuffleBtn").onclick = () => {
   shuffle();
   draw();
-}
+};
+
+document.getElementById("restartBtn").onclick = () => {
+  overlay.style.display = "none";
+  shuffle();
+  draw();
+};
+
+// 画像の読み込みを待ってから開始（重要）
+const img = new Image();
+img.src = "image.jpg";
+img.onload = initGame;
+if (img.complete) initGame();
 </script>
 
 </body>
