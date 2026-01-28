@@ -19,16 +19,17 @@ body{
   width:90vw;
   max-width:360px;
   margin:15px auto;
-  display:grid;
-  grid-template-columns:repeat(3,1fr);
-  gap:2px;
+  display:flex;
+  flex-wrap:wrap;
 }
 
 .tile{
+  width:33.333%;
   position:relative;
   background-image:url("image.jpg");
   background-size:300% 300%;
-  cursor:pointer;
+  box-sizing:border-box;
+  border:1px solid #fff;
 }
 
 .tile::before{
@@ -91,6 +92,15 @@ button{
 const board=document.getElementById("board");
 const overlay=document.getElementById("overlay");
 let tiles=[];
+const img=new Image();
+img.src="image.jpg";
+img.onload=()=>start();
+
+function start(){
+  init();
+  shuffle();
+  draw();
+}
 
 function init(){
   tiles=[1,2,3,4,5,6,7,8,null];
@@ -139,7 +149,6 @@ function shuffle(){
     const t=m[Math.floor(Math.random()*m.length)];
     [tiles[e],tiles[t]]=[tiles[t],tiles[e]];
   }
-  draw();
 }
 
 function check(){
@@ -153,11 +162,8 @@ function check(){
 function closeClear(){
   overlay.style.display="none";
   shuffle();
+  draw();
 }
-
-init();
-shuffle();
-draw();
 </script>
 
 </body>
