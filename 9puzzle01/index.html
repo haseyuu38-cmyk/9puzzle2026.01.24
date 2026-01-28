@@ -6,93 +6,75 @@
 <title>ちっくの9パズル no.1</title>
 
 <style>
-  :root {
-    --board-size: 90vw;
-    --max-board-size: 360px;
-  }
-
   body {
     font-family: sans-serif;
     text-align: center;
     background: #f5f5f5;
     margin: 0;
     padding: 10px;
-    /* タップ時のズーム防止と反応速度向上 */
     touch-action: manipulation;
   }
 
+  h1 { font-size: 24px; margin: 10px 0; }
+
   #board {
-    width: var(--board-size);
-    max-width: var(--max-board-size);
-    aspect-ratio: 1 / 1; /* 確実に正方形にする */
+    width: 90vw;
+    max-width: 360px;
+    aspect-ratio: 1 / 1;
     margin: 15px auto;
-    display: flex;
-    flex-wrap: wrap;
-    background: #eee;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr); /* Galaxyで安定するgridレイアウト */
+    grid-template-rows: repeat(3, 1fr);
+    background: #ccc;
     border: 2px solid #333;
-    box-sizing: border-box;
+    gap: 1px; /* 隙間を1px作ることで境界を明確に */
   }
 
   .tile {
-    width: 33.333%;
-    height: 33.333%;
-    box-sizing: border-box;
-    border: 1px solid #fff;
+    width: 100%;
+    height: 100%;
     background-image: url("image.jpg");
-    /* 背景サイズを3x3（300%）に固定 */
-    background-size: 300% 300%;
+    background-size: 300% 300%; /* 画像を3倍の大きさにする */
     cursor: pointer;
-    /* タップハイライトを消す（Android/iOS用） */
     -webkit-tap-highlight-color: transparent;
+    transition: transform 0.1s;
   }
 
-  .empty {
+  /* 空白マスの設定 */
+  .tile.empty {
     background: #ddd !important;
     cursor: default;
   }
 
   button {
     padding: 12px 24px;
-    font-size: 16px;
-    border-radius: 8px;
-    border: none;
+    font-size: 18px;
     background: #007bff;
     color: white;
+    border: none;
+    border-radius: 8px;
     font-weight: bold;
   }
 
   #overlay {
-    position: fixed;
-    inset: 0;
+    position: fixed; inset: 0;
     background: rgba(0,0,0,.8);
     display: none;
-    justify-content: center;
-    align-items: center;
+    justify-content: center; align-items: center;
     z-index: 100;
   }
 
-  .clear-box {
-    background: white;
-    padding: 20px;
-    border-radius: 12px;
-    width: 80%;
-    max-width: 300px;
-  }
-
-  .clear-box img {
-    width: 100%;
-    height: auto;
-    margin-bottom: 15px;
-  }
+  .clear-box { background: white; padding: 20px; border-radius: 12px; width: 80%; max-width: 300px; }
+  .clear-box img { width: 100%; border-radius: 5px; }
 </style>
 </head>
 <body>
 
 <h1>ちっくの9パズル no.1</h1>
 
-<img src="image.jpg" style="width:100px; height:100px; object-fit:cover; border-radius:8px; margin-bottom:10px;">
+<img src="image.jpg" style="width:100px; height:100px; object-fit:cover; border-radius:8px; margin-bottom:10px; border: 1px solid #ccc;">
 <br>
-<button id="shuffleBtn">シャッフル</button>
+<button onclick="shuffleAndDraw()">シャッフル</button>
 
 <div id="board"></div>
 
@@ -100,7 +82,8 @@
   <div class="clear-box">
     <h2>クリア！</h2>
     <img src="image.jpg">
-    <button id="restartBtn">もう一度</button>
+    <br><br>
+    <button onclick="closeClear()">もう一度</button>
   </div>
 </div>
 
@@ -109,30 +92,36 @@ const board = document.getElementById("board");
 const overlay = document.getElementById("overlay");
 let tiles = [1, 2, 3, 4, 5, 6, 7, 8, null];
 
-// 初期化
-function initGame() {
-  shuffle();
-  draw();
-}
-
-function draw() {
+// 最初に一度だけタイル（枠）を作成
+function createBoard() {
   board.innerHTML = "";
-  tiles.forEach((n, i) => {
+  for (let i = 0; i < 9; i++) {
     const d = document.createElement("div");
     d.className = "tile";
+    d.id = "tile-" + i;
+    d.onclick = () => move(i);
+    board.appendChild(d);
+  }
+}
 
+// 描画（中身の背景位置だけを更新）
+function draw() {
+  tiles.forEach((n, i) => {
+    const d = document.getElementById("tile-" + i);
+    d.className = "tile"; // クラスリセット
+    
     if (n === null) {
       d.classList.add("empty");
+      d.style.backgroundImage = "none";
     } else {
-      // 背景位置を%で指定（0%, 50%, 100%）
+      d.style.backgroundImage = 'url("image.jpg")';
       const x = (n - 1) % 3;
       const y = Math.floor((n - 1) / 3);
-      d.style.backgroundPosition = `${x * 50}% ${y * 50}%`;
-      
-      // クリックイベント（Androidでも確実に動くように定義）
-      d.addEventListener('click', () => move(i));
+      // Galaxyの計算ズレを防ぐため、0%, 50%, 100%を明示
+      const posX = x === 0 ? "0%" : x === 1 ? "50%" : "100%";
+      const posY = y === 0 ? "0%" : y === 1 ? "50%" : "100%";
+      d.style.backgroundPosition = `${posX} ${posY}`;
     }
-    board.appendChild(d);
   });
 }
 
@@ -140,55 +129,46 @@ function move(i) {
   const e = tiles.indexOf(null);
   const row = Math.floor(i / 3);
   const col = i % 3;
-  const emptyRow = Math.floor(e / 3);
-  const emptyCol = e % 3;
+  const er = Math.floor(e / 3);
+  const ec = e % 3;
 
-  const isAdjacent = (Math.abs(row - emptyRow) + Math.abs(col - emptyCol) === 1);
-
-  if (isAdjacent) {
+  if (Math.abs(row - er) + Math.abs(col - ec) === 1) {
     [tiles[i], tiles[e]] = [tiles[e], tiles[i]];
     draw();
-    setTimeout(check, 100); // 描画が終わってからチェック
+    setTimeout(check, 100);
   }
 }
 
-function shuffle() {
-  for (let i = 0; i < 200; i++) {
+function shuffleAndDraw() {
+  for (let i = 0; i < 300; i++) {
     const e = tiles.indexOf(null);
-    const moves = [];
-    if (e % 3 !== 0) moves.push(e - 1);
-    if (e % 3 !== 2) moves.push(e + 1);
-    if (e >= 3) moves.push(e - 3);
-    if (e < 6) moves.push(e + 3);
-    const target = moves[Math.floor(Math.random() * moves.length)];
-    [tiles[e], tiles[target]] = [tiles[target], tiles[e]];
+    const m = [];
+    if (e % 3 !== 0) m.push(e - 1);
+    if (e % 3 !== 2) m.push(e + 1);
+    if (e >= 3) m.push(e - 3);
+    if (e < 6) m.push(e + 3);
+    const t = m[Math.floor(Math.random() * m.length)];
+    [tiles[e], tiles[t]] = [tiles[t], tiles[e]];
   }
+  draw();
 }
 
 function check() {
-  const win = tiles.every((n, i) => n === (i === 8 ? null : i + 1));
-  if (win) {
+  if (tiles.every((n, i) => n === (i === 8 ? null : i + 1))) {
     overlay.style.display = "flex";
   }
 }
 
-// イベント設定
-document.getElementById("shuffleBtn").onclick = () => {
-  shuffle();
-  draw();
-};
-
-document.getElementById("restartBtn").onclick = () => {
+function closeClear() {
   overlay.style.display = "none";
-  shuffle();
-  draw();
-};
+  shuffleAndDraw();
+}
 
-// 画像の読み込みを待ってから開始（重要）
-const img = new Image();
-img.src = "image.jpg";
-img.onload = initGame;
-if (img.complete) initGame();
+// 起動処理
+window.onload = () => {
+  createBoard();
+  shuffleAndDraw();
+};
 </script>
 
 </body>
