@@ -15,7 +15,6 @@
   .tile {
     width: 100%; height: 100%;
     background-image: url("image.jpg");
-    /* 300%という指定をやめ、固定値で指定することで計算を安定させる */
     background-size: 300% 300%;
     background-repeat: no-repeat;
     cursor: pointer;
@@ -26,17 +25,16 @@
 </style>
 </head>
 <body>
-
-<h3>9パズル no.1</h3>
-<img src="image.jpg" id="sample" style="width:100px; height:100px; object-fit:cover; border-radius:8px;">
-<br>
-<button onclick="shuffle()">シャッフル</button>
-<div id="board"></div>
+  <h3>9パズル no.1</h3>
+  <img src="image.jpg" style="width:100px; height:100px; object-fit:cover; border-radius:8px;">
+  <br>
+  <button id="shuffleBtn">シャッフル</button>
+  <div id="board"></div>
 
 <script>
 let tiles = [1, 2, 3, 4, 5, 6, 7, 8, null];
 
-function createBoard() {
+function draw() {
   const board = document.getElementById("board");
   board.innerHTML = "";
   tiles.forEach((n, i) => {
@@ -45,10 +43,7 @@ function createBoard() {
     if (n !== null) {
       const x = (n - 1) % 3;
       const y = Math.floor((n - 1) / 3);
-      // パーセント指定を 0, 50, 100 に固定
-      const posX = [0, 50, 100][x];
-      const posY = [0, 50, 100][y];
-      d.style.backgroundPosition = posX + "% " + posY + "%";
+      d.style.backgroundPosition = (x * 50) + "% " + (y * 50) + "%";
       d.onclick = () => move(i);
     }
     board.appendChild(d);
@@ -57,11 +52,11 @@ function createBoard() {
 
 function move(i) {
   const e = tiles.indexOf(null);
-  const isAdjacent = [1, -1, 3, -3].includes(i - e) && 
-                    !( (i%3==0 && e%3==2) || (i%3==2 && e%3==0) );
-  if (isAdjacent) {
+  const row = Math.floor(i / 3), col = i % 3;
+  const er = Math.floor(e / 3), ec = e % 3;
+  if (Math.abs(row - er) + Math.abs(col - ec) === 1) {
     [tiles[i], tiles[e]] = [tiles[e], tiles[i]];
-    createBoard();
+    draw();
     if (tiles.every((v, idx) => v === (idx === 8 ? null : idx + 1))) {
       setTimeout(() => alert("クリア！"), 100);
     }
@@ -69,7 +64,7 @@ function move(i) {
 }
 
 function shuffle() {
-  for (let i = 0; i < 100; i++) {
+  for (let i = 0; i < 150; i++) {
     const e = tiles.indexOf(null);
     const m = [];
     if (e % 3 !== 0) m.push(e - 1);
@@ -79,10 +74,15 @@ function shuffle() {
     const t = m[Math.floor(Math.random() * m.length)];
     [tiles[e], tiles[t]] = [tiles[t], tiles[e]];
   }
-  createBoard();
+  draw();
 }
 
-window.onload = createBoard;
+document.getElementById("shuffleBtn").onclick = shuffle;
+
+window.onload = () => {
+  draw();
+  shuffle();
+};
 </script>
 </body>
 </html>
