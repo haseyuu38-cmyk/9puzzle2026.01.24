@@ -6,28 +6,38 @@
 <title>ちっくの9パズル no.1</title>
 <style>
   body { font-family: sans-serif; text-align: center; background: #f5f5f5; margin: 0; padding: 10px; touch-action: manipulation; }
+  
   #board {
-    width: 90vw; max-width: 360px; aspect-ratio: 1/1;
+    width: 90vw; height: 90vw; max-width: 360px; max-height: 360px;
     margin: 15px auto; display: grid;
     grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(3, 1fr);
-    background: #ccc; border: 2px solid #333; gap: 2px;
+    background: #ccc; border: 2px solid #333; gap: 1px;
   }
-  .tile { width: 100%; height: 100%; display: flex; cursor: pointer; -webkit-tap-highlight-color: transparent; background: #fff; }
-  .tile img { width: 100%; height: 100%; display: block; }
-  .tile.empty { background: #ddd !important; }
-  .tile.empty img { display: none; }
-  button { padding: 12px 24px; font-size: 18px; background: #007bff; color: white; border: none; border-radius: 8px; font-weight: bold; margin: 10px; }
+
+  .tile {
+    width: 100%; height: 100%;
+    background-image: url("image.jpg");
+    /* 画像サイズを枠の3倍に固定（これだけで3x3になる） */
+    background-size: 300% 300%;
+    background-repeat: no-repeat;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .empty { background: #ddd !important; background-image: none !important; }
+
+  button { padding: 12px 24px; font-size: 18px; background: #007bff; color: white; border: none; border-radius: 8px; margin: 10px; }
   #overlay { position: fixed; inset: 0; background: rgba(0,0,0,.8); display: none; justify-content: center; align-items: center; z-index: 100; }
   .clear-box { background: white; padding: 20px; border-radius: 12px; width: 80%; max-width: 300px; }
-  .clear-box img { width: 100%; border-radius: 5px; }
+  .clear-box img { width: 100%; }
 </style>
 </head>
 <body>
 
 <h1>ちっくの9パズル no.1</h1>
-<img src="image.jpg" style="width:100px; height:100px; object-fit:cover; border-radius:8px; border: 1px solid #ccc;">
+<img src="image.jpg" style="width:80px; height:80px; object-fit:cover; border-radius:8px;">
 <br>
-<button onclick="shuffleAndDraw()">シャッフル</button>
+<button id="shuffleBtn">シャッフル</button>
 <div id="board"></div>
 
 <div id="overlay">
@@ -35,7 +45,7 @@
     <h2>クリア！</h2>
     <img src="image.jpg">
     <br><br>
-    <button onclick="closeClear()">もう一度</button>
+    <button id="restartBtn">もう一度</button>
   </div>
 </div>
 
@@ -43,53 +53,32 @@
 const board = document.getElementById("board");
 const overlay = document.getElementById("overlay");
 let tiles = [1, 2, 3, 4, 5, 6, 7, 8, null];
-const pieceImages = {}; // 分割した画像を保存する場所
 
-// 画像を9分割する関数
-function splitImage() {
-  const img = new Image();
-  img.src = "image.jpg";
-  img.onload = () => {
-    const size = img.width / 3;
-    for (let i = 0; i < 8; i++) {
-      const canvas = document.createElement("canvas");
-      canvas.width = size;
-      canvas.height = size;
-      const ctx = canvas.getContext("2d");
-      const x = i % 3;
-      const y = Math.floor(i / 3);
-      // 元画像から切り抜いてキャンバスに描画
-      ctx.drawImage(img, x * size, y * size, size, size, 0, 0, size, size);
-      pieceImages[i + 1] = canvas.toDataURL("image/jpeg"); // 画像データとして保存
-    }
-    createBoard();
-    shuffleAndDraw();
-  };
-}
-
+// タイルを生成
 function createBoard() {
   board.innerHTML = "";
   for (let i = 0; i < 9; i++) {
     const d = document.createElement("div");
-    d.className = "tile";
-    d.id = "tile-" + i;
+    d.id = "t" + i;
     d.onclick = () => move(i);
-    const imgTag = document.createElement("img");
-    d.appendChild(imgTag);
     board.appendChild(d);
   }
 }
 
+// 描画（ここが重要：計算を単純化）
 function draw() {
   tiles.forEach((n, i) => {
-    const d = document.getElementById("tile-" + i);
-    const img = d.querySelector("img");
+    const d = document.getElementById("t" + i);
     if (n === null) {
-      d.classList.add("empty");
-      img.src = "";
+      d.className = "tile empty";
     } else {
-      d.classList.remove("empty");
-      img.src = pieceImages[n]; // 分割済み画像を表示
+      d.className = "tile";
+      const x = (n - 1) % 3;
+      const y = Math.floor((n - 1) / 3);
+      // パーセント指定（0, 50, 100）が最もズレない
+      const px = x * 50;
+      const py = y * 50;
+      d.style.backgroundPosition = px + "% " + py + "%";
     }
   });
 }
@@ -105,8 +94,8 @@ function move(i) {
   }
 }
 
-function shuffleAndDraw() {
-  for (let i = 0; i < 200; i++) {
+function shuffle() {
+  for (let i = 0; i < 150; i++) {
     const e = tiles.indexOf(null);
     const m = [];
     if (e % 3 !== 0) m.push(e - 1);
@@ -125,13 +114,18 @@ function check() {
   }
 }
 
-function closeClear() {
+document.getElementById("shuffleBtn").onclick = shuffle;
+document.getElementById("restartBtn").onclick = () => {
   overlay.style.display = "none";
-  shuffleAndDraw();
-}
+  shuffle();
+};
 
-// 実行
-splitImage();
+// 起動
+window.onload = () => {
+  createBoard();
+  draw();
+  shuffle();
+};
 </script>
 </body>
 </html>
